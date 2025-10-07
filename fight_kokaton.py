@@ -218,7 +218,7 @@ def main():
         for beam in beams[:]:  # beamsのコピーを使って安全にループ
             for bomb in bombs[:]:
                 if beam.rct.colliderect(bomb.rct):
-                    beams.remove(beam)
+                    beams.remove(beam)  # ビーム削除
                     bombs.remove(bomb)
                     bird.change_img(6, screen)
                     score.add(1)
