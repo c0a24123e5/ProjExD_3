@@ -172,6 +172,11 @@ def main():
                     # ビームと爆弾の衝突判定
                     beam, bomb  = None, None
 
+                    bird.change_img(6, screen)
+
+
+>>>>>>> happy
+
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         if beam is not None:
