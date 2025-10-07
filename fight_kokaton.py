@@ -100,14 +100,19 @@ class Beam:
         self.rct.left = bird.rct.right  # こうかとんの右座標
         self.vx, self.vy = +5, 0
 
-    def update(self, screen: pg.Surface):
+    def update(self, screen: pg.Surface) -> bool:
         """
         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
+        self.rct.move_ip(self.vx, self.vy)
         if check_bound(self.rct) == (True, True):
             self.rct.move_ip(self.vx, self.vy)
             screen.blit(self.img, self.rct)    
+            return True
+        # 画面外ならFalseを返す（削除対象）
+        else:
+            return False
 
 
 class Bomb:
@@ -163,7 +168,7 @@ class Score :
         """
         スコア描画
         """
-        self.img = self.fonto.render(f"スコア: {self.value}", True, self.color)
+        self.img = self.fonto.render(f"スコア: {self.value}", 0, self.color)
         screen.blit(self.img, self.rct)
 
                   
@@ -180,8 +185,9 @@ def main():
     #     bomb = Bomb((255, 0, 0), 10)
     #     bombs.append(bomb)
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
+    beams = []  # 複数ビーム対応
     score=Score()  # スコア生成
-
+    
     beam = None  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
     tmr = 0
@@ -189,9 +195,12 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
+            # if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+            #     # スペースキー押下でBeamクラスのインスタンス生成
+            #     beam = Beam(bird) 
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)            
+                beams.append(Beam(bird))  # ★ 新しいビームをリストに追加
+           
         screen.blit(bg_img, [0, 0])
         
         for bomb in bombs:
@@ -206,20 +215,24 @@ def main():
                 time.sleep(1)
                 return
         
-        for b, bomb in enumerate(bombs):
-            if beam is not None:
+        for beam in beams[:]:  # beamsのコピーを使って安全にループ
+            for bomb in bombs[:]:
                 if beam.rct.colliderect(bomb.rct):
-                    # ビームと爆弾の衝突判定
+                    beams.remove(beam)
                     bombs.remove(bomb)
-                    beam = None
                     bird.change_img(6, screen)
                     score.add(1)
+                    break  # 同じビームで複数の爆弾を破壊しない
+
  
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        if beam is not None:
-            beam.update(screen)   
+        beams = [b for b in beams if b.update(screen)]  # 生きているビームだけ残す
+
+
+        # if beam is not None:
+        #     beam.update(screen)   
         for bomb in bombs:
             bomb.update(screen)
         score.update(screen)   # スコア描画
